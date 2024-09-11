@@ -20,7 +20,7 @@ class App(tk.Tk):
         self.button_reset['command'] = self.reset_grid
         self.button_reset.grid(column=1, row=1)
 
-    # Passe toutes les cell de la gride sur dead
+    # Passe toutes les cell de la grid sur dead
     def reset_grid(self):
         for cell in Cell.instances:
             cell.kill_cell()
@@ -51,19 +51,19 @@ class MainGrid(ttk.Frame):
 class Cell(ttk.Frame):
 
     # Liste des cellules se trouvant sur la grid
-    instances = []
+    instances = {}
 
     def __init__(self, container, is_alive):
         super().__init__(container)
 
-        self.instances.append(self)
+        self.instances[self.winfo_id()] = self
         self.is_alive = is_alive
         self.config(width=19)  # largeur de la cellule
         self.config(height=19)  # hauteur de la cellule
         self.bind("<Button-1>", self.on_click_cell)
         self.update_state()
 
-    # Supprime la cellule du tableau si elle est supprimé du plateau
+    # Supprime la cellule du tableau si elle est supprimé de la grid
     def __del__(self):
         self.instances.remove(self)
 
@@ -71,8 +71,8 @@ class Cell(ttk.Frame):
     def update_state(self):
         # Styles de cellule
         cell_style = ttk.Style()
-        cell_style.configure('CellB.TFrame', bg='black')
-        cell_style.configure('CellG.TFrame', bg='grey')
+        cell_style.configure('CellB.TFrame', background='black')
+        cell_style.configure('CellG.TFrame', background='grey')
 
         if self.is_alive:
             self.config(style='CellB.TFrame')
@@ -96,7 +96,14 @@ class Cell(ttk.Frame):
     
     # Déclenché au clic sur une cellule
     def on_click_cell(self, event):
-        print(self.config())
+        print(self.winfo_id())
+        for cell in Cell.instances:
+            if cell.winfo_id() == (self.winfo_id() - 1):
+                print('cell - 1', cell.winfo_id())
+            elif cell.winfo_id() == (self.winfo_id() + 1):
+                print('cell + 1', cell.winfo_id())
+            elif cell.winfo_id() == (self.winfo_id() - 10):
+                print('cell - 10', cell.winfo_id())
         self.toggle_state()
 
 
