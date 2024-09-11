@@ -22,9 +22,9 @@ class App(tk.Tk):
 
     # Passe toutes les cell de la grid sur dead
     def reset_grid(self):
-        for cell in Cell.instances:
-            cell.kill_cell()
-
+        print('Fonction reset call')
+        for instance in Cell.instances.values():
+            instance.kill_cell()
 
 class MainFrame(ttk.Frame):
 
@@ -65,7 +65,7 @@ class Cell(ttk.Frame):
 
     # Supprime la cellule du tableau si elle est supprimé de la grid
     def __del__(self):
-        self.instances.remove(self)
+        del self.instances[self]
 
     # Configure la cellule selon son état
     def update_state(self):
@@ -98,12 +98,12 @@ class Cell(ttk.Frame):
     def on_click_cell(self, event):
         print(self.winfo_id())
         for cell in Cell.instances:
-            if cell.winfo_id() == (self.winfo_id() - 1):
-                print('cell - 1', cell.winfo_id())
-            elif cell.winfo_id() == (self.winfo_id() + 1):
-                print('cell + 1', cell.winfo_id())
-            elif cell.winfo_id() == (self.winfo_id() - 10):
-                print('cell - 10', cell.winfo_id())
+            if cell == (self.winfo_id() - 1):
+                print('cell - 1', cell)
+            elif cell == (self.winfo_id() + 1):
+                print('cell + 1', cell)
+            elif cell == (self.winfo_id() - 10):
+                print('cell - 10', cell)
         self.toggle_state()
 
 
