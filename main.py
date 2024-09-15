@@ -3,6 +3,56 @@ from tkinter import *
 from tkinter import ttk
 
 
+# Retourne le nombre de cellules vivantes
+def get_alive_cells_around(nearby_cells: []) -> int:
+    count = 0
+    for cell in Cell.instances:
+        if cell.pos in nearby_cells:
+            if cell.is_alive:
+                count += 1
+    return count
+
+
+# Passe toutes les cell de la grid sur dead
+def reset_grid():
+    for instance in Cell.instances:
+        instance.kill()
+
+
+# Définit les cellules voisines de celle renseignée en paramètre
+def cells_around(cell) -> []:
+    # Liste des décalages correspondant aux voisins (gauche, droite, haut, bas et diagonales)
+    deltas = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
+    # Listes des potentielles cellules voisines (peut contenir des cellules inexistantes, qui seraient hors grid)
+    potential_cells_around = [tuple(pos_x - pos_y for pos_x, pos_y in zip(cell.pos, delta)) for delta in deltas]
+    # Ne conserve que les cellules réellement présentes sur la grid
+    cells_around_array = [cell for cell in potential_cells_around if all(0 <= pos <= 19 for pos in cell)]
+
+    return cells_around_array
+
+
+# Lance un tour de jeu
+def run_round():
+    become_alive = []  # cellules qui deviendront vivantes
+    become_dead = []  # cellules qui deviendront mortes
+    # Check les cellules vivantes de la grille
+    for cell in Cell.instances:
+        nearby_cells = cells_around(cell)  # cellules voisines
+        alive_cells_around = get_alive_cells_around(nearby_cells)  # nombre de cellules voisines vivantes
+
+        if alive_cells_around == 3:
+            become_alive.append(cell)
+        elif alive_cells_around == 2:
+            pass
+        else:
+            become_dead.append(cell)
+
+    for cell in become_alive:
+        cell.live()
+    for cell in become_dead:
+        cell.kill()
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -13,83 +63,17 @@ class App(tk.Tk):
         # Config bouton Quitter
         self.button_quit = ttk.Button(self, text="Quitter")
         self.button_quit['command'] = self.destroy
-        self.button_quit.grid(column=1, row=0)
+        self.button_quit.grid(column=5, row=0)
 
         # Config button run
         self.button_run = ttk.Button(self, text='Démarrer')
-        self.button_run['command'] = self.run_round
-        self.button_run.grid(column=1, row=2)
+        self.button_run['command'] = run_round
+        self.button_run.grid(column=5, row=2)
 
         # Config bouton Reset grille
         self.button_reset = ttk.Button(self, text="Réinitialiser")
-        self.button_reset['command'] = self.reset_grid
-        self.button_reset.grid(column=1, row=1)
-
-    # Définit les cellules voisines de celle renseignée en paramètre
-    def cells_around(self, cell) -> []:
-        # Liste des décalages correspondant aux voisins (gauche, droite, haut, bas et diagonales)
-        deltas = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)]
-        # Listes des potentielles cellules voisines (peut contenir des cellules inexistantes, qui seraient hors grid)
-        potential_cells_around = [tuple(pos_x - pos_y for pos_x, pos_y in zip(cell.pos, delta)) for delta in deltas]
-        # Ne conserve que les cellules réellement présentes sur la grid
-        cells_around = [cell for cell in potential_cells_around if all(0 <= pos <= 19 for pos in cell)]
-
-        return cells_around
-
-    # Retourne le nombre de cellules vivantes
-    def get_alive_cells_around(self, nearby_cells: []) -> int:
-        count = 0
-        for cell in Cell.instances:
-            if cell.pos in nearby_cells:
-                if cell.is_alive:
-                    count += 1
-        return count
-
-    # Retourne le nombre de cellules mortes
-    def get_dead_cells_around(self, nearby_cells: []) -> int:
-        count = 0
-        for cell in Cell.instances:
-            if cell.pos in nearby_cells:
-                if not cell.is_alive:
-                    count += 1
-        return count
-
-    # Lance un tour de jeu
-    def run_round(self):
-        # Check les cellules vivantes de la grille
-        become_alive = []
-        become_dead = []
-        for cell in Cell.instances:
-            nearby_cells = self.cells_around(cell)
-            if cell.is_alive:
-                print('Cellules voisines', nearby_cells)
-            alive_cells_around = self.get_alive_cells_around(nearby_cells)
-            print('Cellules vivantes :', alive_cells_around)
-            dead_cells_around = self.get_dead_cells_around(nearby_cells)
-            #print('Cellules mortes :', dead_cells_around)
-
-            if cell.is_alive:
-                if alive_cells_around == 3:
-                    become_alive.append(cell)
-
-                elif 2 < alive_cells_around > 3:
-                    become_dead.append(cell)
-                else:
-                    become_dead.append(cell)
-            if not cell.is_alive:
-                if alive_cells_around == 3:
-                    become_alive.append(cell)
-
-        for cell in become_alive:
-            cell.live()
-        for cell in become_dead:
-            cell.kill()
-
-
-    # Passe toutes les cell de la grid sur dead
-    def reset_grid(self):
-        for instance in Cell.instances:
-            instance.kill()
+        self.button_reset['command'] = reset_grid
+        self.button_reset.grid(column=5, row=1)
 
 
 class MainFrame(ttk.Frame):
@@ -107,7 +91,7 @@ class MainGrid(ttk.Frame):
         self.canvas = Canvas(container, width=size_grid, height=size_grid, background='gray')
         self.canvas.grid()
 
-        # Créé la grille et l'a remplie de cellule morte
+        # Créé la grille et l'a remplie de cellules mortes
         for i in range(0, size_grid, 20):
             for j in range(0, size_grid, 20):
                 self.canvas.create_rectangle(i, j, (i + 20), (j + 20), width=1)
@@ -161,7 +145,7 @@ class Cell(ttk.Frame):
     def live(self):
         self.is_alive = True
         self.update_state()
-    
+
     # Déclenché au clic sur une cellule
     def on_click_cell(self, event):
         print('Position cellule', self.posX, self.posY)
